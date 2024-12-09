@@ -3,6 +3,19 @@ import datetime
 import pandas as pd
 import numpy as np
 import networkx as nx
+# random: Được dùng để thực hiện các thao tác ngẫu nhiên như:
+# Chọn ngẫu nhiên hai nút trong danh sách.
+# Sinh số ngẫu nhiên cho việc lựa chọn xác suất.
+# datetime: Được dùng để tính toán thời gian thực thi của thuật toán.
+# pandas: Hỗ trợ lưu trữ kết quả vào dạng bảng (DataFrame) và xuất dữ liệu ra file CSV.
+# numpy: Cung cấp công cụ xử lý mảng số học hiệu quả, ví dụ:
+# Tạo mảng np.zeros.
+# Các phép toán như np.power, np.sum.
+# networkx: Được dùng để xây dựng và thao tác với đồ thị (graph), bao gồm:
+# Tạo đồ thị có hướng (directed graph).
+# Thêm cạnh và trọng số.
+# Tìm tất cả các đường đi đơn giản giữa hai nút.
+
 
 class ArtificialBeeColony:
     def __init__(self, G, num_bees, max_iterations):
@@ -17,9 +30,20 @@ class ArtificialBeeColony:
         self.num_onlooker_bees = self.population_size - self.num_employeed_bees
         self.test_data = []
         self.test_cases = 0
+
+#    self.G: Đồ thị đầu vào (graph) mà thuật toán sẽ làm việc.
+# self.num_bees: Tổng số lượng ong (bao gồm ong thợ và ong do thám).
+# self.max_iterations: Số lần lặp tối đa để thuật toán dừng lại.
+# self.current_population: Tập hợp các giải pháp ban đầu, mỗi giải pháp là một đường đi ngẫu nhiên trong đồ thị.
+# self.current_best_solution: Lưu giải pháp tốt nhất hiện tại (khởi đầu là giải pháp đầu tiên trong danh sách).
+# self.num_employeed_bees: Số lượng ong thợ (chiếm một nửa đàn ong).
+# self.num_onlooker_bees: Số lượng ong do thám (phần còn lại).
+# self.test_data: Lưu dữ liệu về fitness qua từng lần lặp (để phân tích sau).
+# self.test_cases: Biến đếm số lần kiểm tra fitness của các giải pháp.
+
     
     """
-    Function to Compute fitness value.
+    Hàm tình độ phù hợp(fitness)
     """ 
     def evaluate_fitness(self, path, eps=0.9):
         fitness = 0.0
@@ -34,7 +58,15 @@ class ArtificialBeeColony:
                 fitness += 0
         fitness = np.power(abs(fitness + eps), 2)
         return fitness
+        
+# path: Đường đi cần tính toán độ phù hợp.
+# eps: Giá trị nhỏ để tránh chia cho 0 khi tính xác suất.
+# Mô tả:
+# Lặp qua các cặp nút liên tiếp trong đường đi.
+# Cộng trọng số của cạnh giữa mỗi cặp nút vào tổng fitness nếu cạnh tồn tại.
+# Tăng độ phù hợp bằng cách sử dụng lũy thừa np.power.
 
+    
     def apply_random_neighborhood_structure(self, path):
         """
         This function applies the neighborhood structure to find a new solution.
@@ -47,28 +79,43 @@ class ArtificialBeeColony:
         new_path[node1_index], new_path[node2_index] = new_path[node2_index], new_path[node1_index]
         
         return new_path
-
+    """
+    Hàm tạo giải pháp hàng xóm
+    """ 
     def sort_population_by_fitness(self, population):
         """
         This function sorts the population of paths based on their fitness (the total weight of the edges in the path)
         """
         return sorted(population, key=lambda x: self.evaluate_fitness(x), reverse=True)
+        
+# Mô tả:
+# Sao chép đường đi hiện tại để giữ nguyên bản gốc.
+# Chọn ngẫu nhiên hai nút từ đường đi.
+# Hoán đổi vị trí hai nút trong đường đi để tạo ra một giải pháp mới.
 
+        """
+        Hàm chọn giải pháp theo xác suất
+        """
     def choose_solution_with_probability(self, population, probability_list):
-        """
-        This function selects a solution from the population based on the probability list.
-        """
+        
         random_value = random.random()
         cumulative_probability = 0.0
         for i in range(len(population)):
             cumulative_probability += probability_list[i]
             if random_value <= cumulative_probability:
                 return population[i]
+                
+#  Mục đích: Chọn một giải pháp trong dân số dựa trên xác suất.
+# Mô tả:
+# Tính cumulative probability (xác suất tích lũy).
+# So sánh với một giá trị ngẫu nhiên random_value.
+# Trả về giải pháp tương ứng khi giá trị ngẫu nhiên nằm trong khoảng xác suất.
 
+
+        """
+        Hàm sinh giải pháp ngẫu nhiên
+        """
     def generate_possible_solution(self):
-        """
-        This function generates a random solution (a random path) in the graph
-        """
         nodes = list(self.G.nodes)
         start = nodes[0]
         end = nodes[-1]
@@ -81,7 +128,15 @@ class ArtificialBeeColony:
 
         sample_node = random.choice(samples)
         return sample_node
-    
+# Mục đích: Tạo ra một đường đi ngẫu nhiên từ nút bắt đầu đến nút kết thúc.
+# Mô tả:
+# Lấy tất cả các đường đi đơn giản từ nút đầu đến nút cuối.
+# Nếu một đường đi không chứa đủ các nút, bổ sung thêm các nút còn thiếu vào cuối đường đi.
+# Trả về một đường đi ngẫu nhiên.
+
+        """
+        Thuật toán chính
+        """
     def run(self, patience=10):
         gen_fitness = np.zeros(self.max_iterations)
         patience_counter = 0
